@@ -11,10 +11,8 @@ HEADERS = {'Host': 'allplay.uz',
            'x-allplay-device-id': 'hj32hj42hgh3gh2g3h1g4h21',
            'Accept-Language': 'ru',
            'x-allplay-app': 'ios',
-           'Content-Length': '96',
            'User-Agent': 'Allplay/3.25 (uz.allplay.app; build:1; iOS 14.0.0) Alamofire/4.9.1',
-           'x-allplay-model': 'iPhone 11 Pro Max',
-           'Connection': 'keep-alive'
+           'x-allplay-model': 'iPhone 12 Pro Max'
            }
 
 FFMPEG_COMMAND = 'ffmpeg -i {0} -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 {1}.mp4'
@@ -25,10 +23,19 @@ PASSWORD = ''
 
 def main(movie_link, api_token):
     movie_id = get_movie_id(movie_link)
-    movie_name = get_movie_info(movie_id, api_token)
+    movie_name = get_movie_info(movie_id)
     m3u8_url = get_m3u8_url(movie_id, api_token)
     print(f'Начинаю скачивание фильма: {movie_name}')
     download_movie(m3u8_url, movie_name)
+
+
+def get_movie_info(movie_id):
+    request_url = f'https://allplay.uz/api/v1/movie/1/{movie_id}'
+    get_request = requests.get(request_url, headers=HEADERS)
+    response = get_request.json()
+
+    movie_name = response['data']['title']
+    return movie_name
 
 
 def get_m3u8_url(movie_id, api_token):
@@ -43,16 +50,6 @@ def get_m3u8_url(movie_id, api_token):
 
     m3u8_url = response['data']['url']
     return m3u8_url
-
-
-def get_movie_info(movie_id, api_token):
-    HEADERS['Authorization'] = 'Bearer {}'.format(api_token)
-    request_url = f'https://allplay.uz/api/v1/movie/1/{movie_id}'
-    get_request = requests.get(request_url, headers=HEADERS)
-    response = get_request.json()
-
-    movie_name = response['data']['title']
-    return movie_name
 
 
 def download_movie(m3u8_url, file_name):
@@ -82,4 +79,3 @@ def auth(email, password):
 if __name__ == '__main__':
     request_token = auth(EMAIL, PASSWORD)
     main('https://allmovies.uz/movie/36836/greenland', request_token)
-
