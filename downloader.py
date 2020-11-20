@@ -15,19 +15,20 @@ HEADERS = {'Host': 'allplay.uz',
            'x-allplay-model': 'iPhone 12 Pro Max'
            }
 
-FFMPEG_COMMAND = 'ffmpeg -i {0} -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 {1}.mp4'
+FFMPEG_COMMAND = 'ffmpeg -i {0} -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 {1}_{2}.mp4'
 
 EMAIL = ''
 PASSWORD = ''
 
 
-def main(movie_link):
+def main(movie_link, chosen_quality):
     api_token = auth(EMAIL, PASSWORD)
     movie_id = get_movie_id(movie_link)
     movie_name = get_movie_info(movie_id)
-    m3u8_url = get_m3u8_url(movie_id, api_token)
-    print(f'Начинаю скачивание фильма: {movie_name}')
-    download_movie(m3u8_url, movie_name)
+    request_movie_id, quality = get_movie_qualities(movie_id, chosen_quality, api_token)
+    m3u8_url = get_m3u8_url(request_movie_id, api_token)
+    print(f'Начинаю скачивание фильма: {movie_name} в качестве {quality}')
+    download_movie(m3u8_url, movie_name, quality)
 
 
 def auth(email, password):
@@ -58,9 +59,34 @@ def get_movie_info(movie_id):
     return movie_name
 
 
+def get_movie_qualities(movie_id, quality, api_token):
+    if quality not in ['sd', 'hd', 'fullhd']:
+        quality = 'sd'
+
+    HEADERS['Authorization'] = 'Bearer {}'.format(api_token)
+    request_url = f'https://allplay.uz/api/v1/files/1/{movie_id}'
+    get_request = requests.get(request_url, headers=HEADERS)
+    response = get_request.json()
+
+    list_data = response['data']
+    all_qualities = {}
+    for data in list_data:
+        movie_id = data['id']
+        request_movie_quality = data['quality']
+        all_qualities[request_movie_quality] = movie_id
+
+    if quality in all_qualities.keys():
+        request_movie_id = all_qualities[quality]
+    else:
+        request_movie_id = all_qualities['sd']
+        quality = 'sd'
+
+    return request_movie_id, quality
+
+
 def get_m3u8_url(movie_id, api_token):
     HEADERS['Authorization'] = 'Bearer {}'.format(api_token)
-    request_url = f'https://allplay.uz/api/v1/file/play/1/{movie_id}?support_trial=1&type=hls'
+    request_url = f'https://allplay.uz/api/v1/file/play/1/{movie_id}?support_trial=2&type=hls'
     get_request = requests.get(request_url, headers=HEADERS)
     response = get_request.json()
 
@@ -72,10 +98,11 @@ def get_m3u8_url(movie_id, api_token):
     return m3u8_url
 
 
-def download_movie(m3u8_url, file_name):
-    command = FFMPEG_COMMAND.format(m3u8_url, file_name).split(' ')
+def download_movie(m3u8_url, file_name, quality):
+    command = FFMPEG_COMMAND.format(m3u8_url, file_name, quality).split(' ')
     subprocess.call(command)
 
 
 if __name__ == '__main__':
-    main('https://allmovies.uz/movie/36836/greenland')
+    # All qualities: sd, hd, fullhd
+    main('https://allmovies.uz/movie/823/fast-and-furious', 'fullhd')
