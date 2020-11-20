@@ -84,9 +84,9 @@ def get_movie_qualities(movie_id, quality, api_token):
     return request_movie_id, quality
 
 
-def get_m3u8_url(movie_id, api_token):
+def get_m3u8_url(request_movie_id, api_token):
     HEADERS['Authorization'] = 'Bearer {}'.format(api_token)
-    request_url = f'https://allplay.uz/api/v1/file/play/1/{movie_id}?support_trial=2&type=hls'
+    request_url = f'https://allplay.uz/api/v1/file/play/1/{request_movie_id}?support_trial=2&type=hls'
     get_request = requests.get(request_url, headers=HEADERS)
     response = get_request.json()
 
