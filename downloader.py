@@ -21,12 +21,32 @@ EMAIL = ''
 PASSWORD = ''
 
 
-def main(movie_link, api_token):
+def main(movie_link):
+    api_token = auth(EMAIL, PASSWORD)
     movie_id = get_movie_id(movie_link)
     movie_name = get_movie_info(movie_id)
     m3u8_url = get_m3u8_url(movie_id, api_token)
     print(f'Начинаю скачивание фильма: {movie_name}')
     download_movie(m3u8_url, movie_name)
+
+
+def auth(email, password):
+    data = {'email': email, 'password': password, 'device_id': 'hj32hj42hgh3gh2g3h1g4h21'}
+    request_url = 'https://allplay.uz/api/v1/login'
+    get_request = requests.post(request_url, headers=HEADERS, data=data)
+    response = get_request.json()
+
+    if 'errors' in response.keys():
+        print(response['errors']['email'][0])
+        sys.exit(1)
+
+    api_token = response['api_token']
+    return api_token
+
+
+def get_movie_id(movie_link):
+    movie_id = str(movie_link).split('movie/')[1].split('/')[0]
+    return movie_id
 
 
 def get_movie_info(movie_id):
@@ -57,25 +77,5 @@ def download_movie(m3u8_url, file_name):
     subprocess.call(command)
 
 
-def get_movie_id(movie_link):
-    movie_id = str(movie_link).split('movie/')[1].split('/')[0]
-    return movie_id
-
-
-def auth(email, password):
-    data = {'email': email, 'password': password, 'device_id': 'hj32hj42hgh3gh2g3h1g4h21'}
-    request_url = 'https://allplay.uz/api/v1/login'
-    get_request = requests.post(request_url, headers=HEADERS, data=data)
-    response = get_request.json()
-
-    if 'errors' in response.keys():
-        print(response['errors']['email'][0])
-        sys.exit(1)
-
-    api_token = response['api_token']
-    return api_token
-
-
 if __name__ == '__main__':
-    request_token = auth(EMAIL, PASSWORD)
-    main('https://allmovies.uz/movie/36836/greenland', request_token)
+    main('https://allmovies.uz/movie/36836/greenland')
