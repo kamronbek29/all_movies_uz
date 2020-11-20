@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 
@@ -15,7 +16,7 @@ HEADERS = {'Host': 'allplay.uz',
            'x-allplay-model': 'iPhone 12 Pro Max'
            }
 
-FFMPEG_COMMAND = 'ffmpeg -i {0} -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 {1}_{2}.mp4'
+FFMPEG_COMMAND = 'ffmpeg -i {0} -bsf:a aac_adtstoasc -vcodec copy -c copy -crf 50 {1}'
 
 EMAIL = ''
 PASSWORD = ''
@@ -98,8 +99,12 @@ def get_m3u8_url(request_movie_id, api_token):
     return m3u8_url
 
 
-def download_movie(m3u8_url, file_name, quality):
-    command = FFMPEG_COMMAND.format(m3u8_url, file_name, quality).split(' ')
+def download_movie(m3u8_url, movie_name, quality):
+    if not os.path.exists('movies'):
+        os.mkdir('movies')
+
+    file_dir = 'movies/{0}_{1}.mp4'.format(movie_name, quality).replace(' ', '-')
+    command = FFMPEG_COMMAND.format(m3u8_url, file_dir, quality).split(' ')
     subprocess.call(command)
 
 
